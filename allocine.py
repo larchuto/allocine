@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
 
+import sys
 import time
 import base64
 import hashlib
@@ -90,32 +91,47 @@ class allocineMovie(allocineRequest):
             except:
                 self.result = None
 
+
+def usage():
+    print '''
+allocine.py title
+=================
+
+    This is actually just an example of use of this allocine library
+    Updates that construct web page for example will happen soon
+
+    - title : Title or part
+
+    '''
+
 if __name__ == '__main__':
-    s = allocineSearch("The place beyond the pines")
-    if s.found():    
-        for movie in s.result['feed']['movie']:
-            print '%s - %d' % (movie['originalTitle'], movie['code'])
+    if len(sys.argv) < 2:
+        usage()
+    else:
+        s = allocineSearch(sys.argv[1])
+        if s.found():    
+            for movie in s.result['feed']['movie']:
+                print '%s - %d' % (movie['originalTitle'], movie['code'])
 
-    m = allocineMovie(s.result['feed']['movie'][0]['code'])
-    print m.result
-        
-    print '\n'
-    print 'Genre : '
-    print m.result['movie']['genre']
-    print 'Synopsis : '
-    print m.result['movie']['synopsis']
-    print 'Realisateur'
-    print m.result['movie']['castingShort']['directors']
-    print 'Acteurs'
-    try:
-        print m.result['movie']['castingShort']['actors']
-    except:
-        print 'oups'
-    print 'User rating'
-    print m.result['movie']['statistics']['userRating']
+        m = allocineMovie(s.result['feed']['movie'][0]['code'])
+            
+        print '\n'
+        print 'Genre : '
+        print m.result['movie']['genre']
+        print 'Synopsis : '
+        print m.result['movie']['synopsis']
+        print 'Realisateur'
+        print m.result['movie']['castingShort']['directors']
+        print 'Acteurs'
+        try:
+            print m.result['movie']['castingShort']['actors']
+        except:
+            print 'oups'
+        print 'User rating'
+        print m.result['movie']['statistics']['userRating']
 
-    for k, v in m.result['movie'].iteritems():
-        print k
+        for k, v in m.result['movie'].iteritems():
+            print k
 
 
 '''

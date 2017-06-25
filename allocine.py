@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# -*- coding: utf8 -*-
+# -*  coding: utf8 -*-
 
 import sys
 import time
@@ -8,6 +8,14 @@ import hashlib
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 import json
+
+
+'''
+References :
+    API : http://wiki.gromez.fr/dev/api/allocine_v3
+    forum : http://fr.openclassrooms.com/forum/sujet/probleme-avec-l-api-d-allocine
+'''
+
 
 class allocineRequest():
     def __init__(self):
@@ -91,50 +99,64 @@ class allocineMovie(allocineRequest):
                 self.result = None
 
 
-def usage():
-    print('''
-allocine.py title
-=================
 
-    This is actually just an example of use of this allocine library
-    Updates that construct web page for example will happen soon
 
-    - title : Title or part
-
-    ''')
 
 if __name__ == '__main__':
+    from textwrap import wrap
+    import subprocess
+    import datetime
+
+    def usage():
+        print('''
+    allocine.py title
+    =================
+
+        This is actually just an example of use of this allocine library
+        Updates that construct web page for example will happen soon
+
+          title : Title or part
+
+        ''')
+
+    def print_data(data_name, data_expr, column_size=80):
+        try:
+            data = str(eval(data_expr))
+            wrapped_data = wrap(data, width = int(column_size) - len(data_name),
+                                      initial_indent    = '\t' + ' '*len(data_name),
+                                      subsequent_indent = '\t' + ' '*len(data_name))
+            print(wrapped_data[0], end='')
+            print("\r\t%s" % data_name)
+            for i in range(1,len(wrapped_data)):
+                print(wrapped_data[i])
+        except KeyError:
+            pass
+
+    # get terminal size
+    rows, columns = subprocess.check_output(['stty', 'size']).decode().split()
+
     if len(sys.argv) < 2:
         usage()
     else:
         s = allocineSearch(sys.argv[1])
-        if s.found():    
-            for movie in s.result['feed']['movie']:
-                print('%s - %d' % (movie['originalTitle'], movie['code']))
-
-        m = allocineMovie(s.result['feed']['movie'][0]['code'])
-            
-        print('\n')
-        print('Genre : ')
-        print(m.result['movie']['genre'])
-        print('Synopsis : ')
-        print(m.result['movie']['synopsis'])
-        print('Realisateur')
-        print(m.result['movie']['castingShort']['directors'])
-        print('Acteurs')
-        try:
-            print(m.result['movie']['castingShort']['actors'])
-        except:
-            print('oups')
-        print('User rating')
-        print(m.result['movie']['statistics']['userRating'])
-
-        for k, v in m.result['movie'].items():
-            print(k)
-
-
-'''
-References :
-    API : http://wiki.gromez.fr/dev/api/allocine_v3
-    forum : http://fr.openclassrooms.com/forum/sujet/probleme-avec-l-api-d-allocine
-'''
+        if s.found():
+            i = 0
+            for unit_result in s.result['feed']['movie']:
+                i = i+1
+                result_title = "Result %d" % i
+                print(result_title)
+                print("="*len(result_title))
+                code = unit_result['code']
+                movie=allocineMovie(code).result['movie']
+                print_data("title            ", "movie['title']"                                       , columns)
+                # print_data("original title   ", "movie['originalTitle']"                               , columns)
+                print_data("year             ", "movie['productionYear']"                              , columns)
+                print_data("director(s)      ", "movie['castingShort']['directors']"                   , columns)
+                print_data("actors           ", "movie['castingShort']['actors']"                      , columns)
+                print_data("genre            ", "', '.join([genre['$'] for genre in movie['genre']])"  , columns)
+                print_data("nationality      ", "', '.join([nat['$'] for nat in movie['nationality']])", columns)
+                print_data("runtime          ", "str(datetime.timedelta(seconds=movie['runtime']))"                                     , columns)
+                print_data("synopsis         ", "movie['synopsis']"                                    , columns)
+                # print_data("allocine url     ", "movie['link'][0]['href']"                             , columns)
+                # print_data("poster url       ", "movie['poster']['href']"                              , columns)
+                print()
